@@ -296,17 +296,28 @@
       visibility: hidden;
     }
 
+    /* Embedded Video inside Loader - Set to Loop */
+    .boot-video {
+      width: 220px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
     .boot p {
       font-size: 12.5px;
       letter-spacing: .05em;
       color: var(--fg-faint);
+      font-weight: bold;
     }
 
     .bar {
-      width: 150px;
-      height: 1px;
+      width: 180px;
+      height: 2px;
       background: var(--rule);
       overflow: hidden;
+      border-radius: 2px;
     }
 
     .bar i {
@@ -316,7 +327,6 @@
       background: var(--fg);
       transform: scaleX(0);
       transform-origin: 0 50%;
-      transition: transform 0.1s linear;
     }
 
     /* Scroll Track */
@@ -396,15 +406,17 @@
 </head>
 <body>
 
-  <!-- Preloader -->
+  <!-- Preloader Screen -->
   <div class="boot" id="boot">
+    <!-- Video loops continuously in the loading screen -->
+    <video class="boot-video" autoplay loop muted playsinline src="loading.mp4"></video>
     <div class="bar"><i id="bootBar"></i></div>
     <p id="bootPct">LOADING 0%</p>
   </div>
 
-  <!-- Stage -->
+  <!-- Stage (Catbox Video Background) -->
   <div class="stage">
-    <video id="clip" muted playsinline preload="auto" disablepictureinpicture src="loading.mp4"></video>
+    <video id="clip" muted playsinline preload="auto" disablepictureinpicture src="https://files.catbox.moe/r3y0jp.mp4"></video>
     <div class="veil"></div>
     <div class="grain"></div>
   </div>
@@ -470,14 +482,14 @@
       ];
       var DRIFT = 22;
 
-      /* 10-Second Loader Timer Logic */
-      var loadingDuration = 10000; // 10 seconds
-      var intervalTime = 50; // Update every 50ms
+      /* Single 0% to 100% Load sequence over 10s */
+      var duration = 10000; // 10 seconds total loading time
+      var intervalTime = 50; 
       var elapsed = 0;
 
       var loaderTimer = setInterval(function() {
         elapsed += intervalTime;
-        var pct = Math.min(Math.floor((elapsed / loadingDuration) * 100), 100);
+        var pct = Math.min(Math.floor((elapsed / duration) * 100), 100);
 
         if (bootBar) bootBar.style.transform = "scaleX(" + (pct / 100) + ")";
         if (bootPct) bootPct.textContent = "LOADING " + pct + "%";
@@ -504,12 +516,12 @@
       var progress = 0;
       var seekTo = 0;
       var seekAt = 0;
-      var duration = 8;
+      var vidDuration = 8;
 
       function readScroll() {
         var max = document.documentElement.scrollHeight - window.innerHeight;
         progress = max > 0 ? clamp(window.pageYOffset / max, 0, 1) : 0;
-        if (duration) seekTo = progress * duration;
+        if (vidDuration) seekTo = progress * vidDuration;
       }
 
       function paint() {
@@ -530,7 +542,7 @@
       }
 
       function frame() {
-        if (duration) {
+        if (vidDuration) {
           var gap = seekTo - seekAt;
           if (Math.abs(gap) > 0.0008) {
             seekAt += gap * 0.12;
@@ -548,7 +560,7 @@
       }
 
       clip.addEventListener("loadedmetadata", function() {
-        duration = clip.duration || 8;
+        vidDuration = clip.duration || 8;
         readScroll();
         seekAt = seekTo;
         try { clip.currentTime = seekAt; } catch(e) {}
