@@ -316,6 +316,7 @@
       background: var(--fg);
       transform: scaleX(0);
       transform-origin: 0 50%;
+      transition: transform 0.1s linear;
     }
 
     /* Scroll Track */
@@ -397,13 +398,13 @@
 
   <!-- Preloader -->
   <div class="boot" id="boot">
-    <div class="bar"><i id="bootBar" style="transform: scaleX(1);"></i></div>
-    <p id="bootPct">READY</p>
+    <div class="bar"><i id="bootBar"></i></div>
+    <p id="bootPct">LOADING 0%</p>
   </div>
 
   <!-- Stage -->
   <div class="stage">
-    <video id="clip" muted playsinline preload="auto" disablepictureinpicture src="https://files.catbox.moe/r3y0jp.mp4"></video>
+    <video id="clip" muted playsinline preload="auto" disablepictureinpicture src="loading.mp4"></video>
     <div class="veil"></div>
     <div class="grain"></div>
   </div>
@@ -457,6 +458,8 @@
 
       var clip = document.getElementById("clip");
       var boot = document.getElementById("boot");
+      var bootBar = document.getElementById("bootBar");
+      var bootPct = document.getElementById("bootPct");
       var meter = document.getElementById("meter");
       var panels = [].slice.call(document.querySelectorAll("[data-panel]"));
 
@@ -466,6 +469,24 @@
         [0.78, 0.86, 1.10, 1.20]
       ];
       var DRIFT = 22;
+
+      /* 10-Second Loader Timer Logic */
+      var loadingDuration = 10000; // 10 seconds
+      var intervalTime = 50; // Update every 50ms
+      var elapsed = 0;
+
+      var loaderTimer = setInterval(function() {
+        elapsed += intervalTime;
+        var pct = Math.min(Math.floor((elapsed / loadingDuration) * 100), 100);
+
+        if (bootBar) bootBar.style.transform = "scaleX(" + (pct / 100) + ")";
+        if (bootPct) bootPct.textContent = "LOADING " + pct + "%";
+
+        if (pct >= 100) {
+          clearInterval(loaderTimer);
+          dismissBoot();
+        }
+      }, intervalTime);
 
       function clamp(v, a, b) {
         return Math.min(Math.max(v, a), b);
@@ -531,12 +552,7 @@
         readScroll();
         seekAt = seekTo;
         try { clip.currentTime = seekAt; } catch(e) {}
-        dismissBoot();
       });
-
-      clip.addEventListener("canplay", dismissBoot);
-      clip.addEventListener("canplaythrough", dismissBoot);
-      setTimeout(dismissBoot, 1500);
 
       function unlock() {
         var p = clip.play();
